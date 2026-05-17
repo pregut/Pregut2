@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pregut - نظام الارتداء الذكي للجهاز الهضمي</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          medical: { 50:'#e0f2f1',100:'#b2dfdb',400:'#26a69a',500:'#009688',600:'#00897b',700:'#00796b',800:'#004d40',900:'#00251a' },
+          dark: { 700:'#1e293b', 800:'#0f172a', 900:'#020617' }
+        },
+        fontFamily: { ar:['Tajawal','sans-serif'], en:['Plus Jakarta Sans','sans-serif'] }
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --success: #009688;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text-main: #1e293b;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Tajawal', sans-serif; margin: 0; }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:#1e293b; }
+  ::-webkit-scrollbar-thumb { background:#009688; border-radius:4px; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+    z-index: 20;
+    overflow-y: auto;
+  }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid #334155;
+  }
+  .nav-header {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #64748b;
+    margin-bottom: 0.4rem;
+    margin-top: 0.75rem;
+    font-weight: 700;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    transition: all 0.25s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background:#00796b; color:white; }
+  .nav-item.active { background:#009688; color:white; font-weight:700; }
+
+  /* Slides */
+  .slide-view { display:none; flex-direction:column; min-height:100%; }
+  .slide-view.active { display:flex; animation: fadeIn 0.35s ease forwards; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Wave bars */
+  @keyframes wavePulse { 0%,100%{transform:scaleY(0.2)} 50%{transform:scaleY(1)} }
+  .wave-bar {
+    width: 10px;
+    border-radius: 6px;
+    background: linear-gradient(to top, #009688, #00b0ff);
+    transform-origin: bottom;
+    animation: wavePulse 1.6s ease-in-out infinite;
+    height: 60px;
+  }
+  .wave-bar:nth-child(1){animation-duration:1.2s;animation-delay:0.0s}
+  .wave-bar:nth-child(2){animation-duration:1.8s;animation-delay:0.2s}
+  .wave-bar:nth-child(3){animation-duration:1.4s;animation-delay:0.4s}
+  .wave-bar:nth-child(4){animation-duration:1.6s;animation-delay:0.1s}
+  .wave-bar:nth-child(5){animation-duration:1.3s;animation-delay:0.5s}
+  .wave-bar:nth-child(6){animation-duration:1.7s;animation-delay:0.3s}
+  .wave-bar:nth-child(7){animation-duration:1.5s;animation-delay:0.0s}
+  .wave-bar:nth-child(8){animation-duration:1.9s;animation-delay:0.6s}
+
+  /* Tiles */
+  .tile {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-top: 4px solid #009688;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    text-align: center;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .tile:hover { box-shadow: 0 8px 24px rgba(0,150,136,0.15); transform: translateY(-2px); }
+  .tile i { font-size: 2rem; color: #009688; margin-bottom: 0.75rem; display: block; }
+  .tile h3 { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.4rem; }
+  .tile p { font-size: 0.8rem; color: #64748b; line-height: 1.5; }
+
+  /* Stat cards */
+  .stat-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    border-top: 5px solid #009688;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    text-align: center;
+  }
+  .stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #009688;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Dashboard grid */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .metric-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .metric-card h3 { font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem; font-weight: 600; }
+  .metric-card .value { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+  .metric-card .icon-placeholder { color: #009688; font-size: 1.5rem; margin-top: 0.5rem; display: block; }
+
+  /* Simulator layout */
+  .simulator-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .wave-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.25rem;
+  }
+  .wave-visualizer {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 80px;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+  .sim-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-success { background: #009688; color: white; }
+  .btn-warning { background: #f59e0b; color: white; }
+  .btn-danger { background: #ef4444; color: white; }
+
+  /* Notification bar */
+  .notification-bar {
+    background: #ecfdf5;
+    border: 1px solid #86efac;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.88rem;
+    color: #1e293b;
+    line-height: 1.6;
+  }
+  .notification-bar.warning { background: #fffbeb; border-color: #fcd34d; }
+  .notification-bar.critical { background: #fef2f2; border-color: #fca5a5; }
+
+  /* Warning box */
+  .warning-box {
+    background: linear-gradient(135deg, #fff7ed, #fef2f2);
+    border: 2px solid #fed7aa;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    text-align: center;
+  }
+  .warning-box > i { font-size: 4rem; color: #f59e0b; margin-bottom: 1.5rem; display: block; }
+
+  /* Ref cards */
+  .ref-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .ref-link-btn, .ref-link-btn:visited {
+    background: #009688;
+    color: white;
+    padding: 0.35rem 0.85rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+  .ref-link-btn:hover { background: #00796b; }
+
+  /* Contact form */
+  .contact-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+  .form-group.col-span-2 { grid-column: span 2; }
+  .form-group label { font-size: 0.78rem; font-weight: 700; color: #374151; }
+  .form-group input, .form-group textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #f9fafb;
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    border-color: #009688;
+    background: white;
+  }
+
+  /* Hardware visual */
+  .hardware-visual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .hardware-device-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    border-top: 4px solid #009688;
+    box-shadow: 0 4px 16px rgba(0,150,136,0.1);
+  }
+  .hardware-device-card i { font-size: 2.5rem; color: #009688; margin-bottom: 0.75rem; display: block; }
+  .hardware-device-card h4 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 0.4rem; }
+  .hardware-device-card p { font-size: 0.8rem; color: #64748b; }
+
+  /* Phone mockup */
+  .phone-mockup {
+    background: #0f172a;
+    border-radius: 1.5rem;
+    padding: 1.25rem;
+    color: white;
+    max-width: 280px;
+    margin: 0 auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .phone-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+  }
+  .phone-circular-progress {
+    background: linear-gradient(135deg, #009688, #00b0ff);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    min-height: 100px;
+  }
+  .phone-progress-text { text-align: center; }
+  .phone-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .phone-stat-tile {
+    background: #1e293b;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  .phone-stat-tile i { color: #009688; font-size: 1.25rem; margin-bottom: 0.25rem; display: block; }
+  .phone-stat-tile h5 { font-size: 0.85rem; font-weight: 700; color: white; margin-bottom: 0.2rem; }
+  .phone-stat-tile span { font-size: 0.7rem; color: #64748b; }
+
+  /* Slide footer */
+  .slide-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1rem;
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  /* Popup */
+  #customPopup {
+    display: none;
+    position: fixed;
+    top: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: white;
+    padding: 1rem 1.75rem;
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 999;
+    font-weight: 700;
+    text-align: center;
+    border: 1px solid #009688;
+    max-width: 90vw;
+    font-size: 0.9rem;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    body { flex-direction: column !important; }
+    .sidebar { width: 100%; min-width: unset; padding: 1rem; flex-direction: row; flex-wrap: wrap; gap: 0.5rem; overflow-x: auto; }
+    .sidebar-brand { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+    nav.nav-menu { display: flex; flex-direction: row; flex-wrap: wrap; gap: 4px; flex-grow: 0; }
+    .nav-header { display: none; }
+    .nav-item { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+    .dashboard-grid { grid-template-columns: 1fr 1fr; }
+    .simulator-layout { grid-template-columns: 1fr; }
+    .contact-form { grid-template-columns: 1fr; }
+    .form-group.col-span-2 { grid-column: span 1; }
+    .hardware-visual { grid-template-columns: 1fr; }
+  }
+
+  /* Bullet list */
+  .bullet-list { list-style: none; padding: 0; margin: 0; }
+  .bullet-list li { position: relative; padding-right: 2rem; padding-left: 0.5rem; margin-bottom: 0.75rem; font-size: 0.95rem; color: #374151; line-height: 1.6; }
+  [dir="ltr"] .bullet-list li { padding-left: 2rem; padding-right: 0.5rem; }
+
+  .lang-btn {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    margin-bottom: 1rem;
+  }
+  .lang-btn:hover { background: #009688; border-color: #009688; }
+</style>
+</head>
+<body dir="rtl" style="display:flex; height:100vh; overflow:hidden; background:#f1f5f9;">
+
+<div id="customPopup"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <i class="fa-solid fa-shield-heart" style="font-size:1.75rem; color:#009688;"></i>
+    <h2 style="font-size:1.1rem; font-weight:800;" id="brandName">نظام Pregut</h2>
+  </div>
+
+  <button class="lang-btn" onclick="toggleLanguage()">
+    <i class="fa-solid fa-globe"></i>
+    <span id="langBtnText">English</span>
+  </button>
+
+  <nav class="nav-menu" style="flex-grow:1; overflow-y:auto;">
+    <div class="nav-header" id="nh1">التعريف والمشكلة</div>
+    <ul style="list-style:none;padding:0;margin:0 0 0.5rem 0;">
+      <li class="nav-item active" onclick="switchSlide('slide-intro')"><i class="fa-solid fa-home" style="width:18px;"></i><span id="n_intro">واجهة الابتكار</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-desc')"><i class="fa-solid fa-circle-info" style="width:18px;"></i><span id="n_desc">وصف الابتكار</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-problem')"><i class="fa-solid fa-triangle-exclamation" style="width:18px;"></i><span id="n_problem">المشكلة الصحية</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-stats')"><i class="fa-solid fa-chart-simple" style="width:18px;"></i><span id="n_stats">أهمية المشكلة صحياً</span></li>
+    </ul>
+    <div class="nav-header" id="nh2">التقنية والوظائف</div>
+    <ul style="list-style:none;padding:0;margin:0 0 0.5rem 0;">
+      <li class="nav-item" onclick="switchSlide('slide-components')"><i class="fa-solid fa-cubes" style="width:18px;"></i><span id="n_components">مكونات النظام</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-band')"><i class="fa-solid fa-clock" style="width:18px;"></i><span id="n_band">وظيفة السوار الذكي</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-sensor')"><i class="fa-solid fa-pager" style="width:18px;"></i><span id="n_sensor">الحساس البطني</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-display')"><i class="fa-solid fa-mobile-screen" style="width:18px;"></i><span id="n_display">عرض البيانات والتحليل</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-workflow')"><i class="fa-solid fa-diagram-project" style="width:18px;"></i><span id="n_workflow">محاكاة الذكاء الاصطناعي</span></li>
+    </ul>
+    <div class="nav-header" id="nh3">النتائج والمراجع</div>
+    <ul style="list-style:none;padding:0;margin:0;">
+      <li class="nav-item" onclick="switchSlide('slide-benefits')"><i class="fa-solid fa-award" style="width:18px;"></i><span id="n_benefits">الفوائد العملية</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-alert')"><i class="fa-solid fa-circle-exclamation" style="width:18px;"></i><span id="n_alert">تنبيه علمي هام</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-references')"><i class="fa-solid fa-envelope" style="width:18px;"></i><span id="n_references">التواصل والمراجع</span></li>
+      <li class="nav-item" onclick="switchSlide('slide-demo')" style="background:linear-gradient(135deg,#009688,#00796b); color:white; margin-top:0.5rem;"><i class="fa-solid fa-flask" style="width:18px;"></i><span>🧪 تجربة المشروع</span></li>
+    </ul>
+  </nav>
+</aside>
+
+<!-- Main Content -->
+<main style="flex:1; overflow-y:auto; padding:2rem 2.5rem; background:#f1f5f9; display:flex; flex-direction:column;">
+
+  <!-- SLIDE 1: Intro -->
+  <div id="slide-intro" class="slide-view active">
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem 0;">
+      <div style="background:white; border-radius:1.5rem; padding:2rem; box-shadow:0 8px 32px rgba(0,150,136,0.1); margin-bottom:2rem; display:inline-block;">
+        <svg width="140" height="140" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00b0ff"/>
+              <stop offset="100%" stop-color="#009688"/>
+            </linearGradient>
+          </defs>
+          <path d="M50,5 C50,5 90,15 90,45 C90,75 50,95 50,95 C50,95 10,75 10,45 C10,15 50,5 50,5 Z" fill="url(#sg)"/>
+          <path d="M35,50 L45,60 L65,38" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="50" cy="35" r="6" fill="rgba(255,255,255,0.3)"/>
+          <path d="M46,35 L48,30 L50,38 L52,25 L54,38 L56,35" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <h1 id="intro_title" style="font-size:2.5rem; font-weight:900; color:#0f172a; margin-bottom:1rem; line-height:1.3;">نظام Pregut للارتداء الذكي القابل للارتداء</h1>
+      <p id="intro_desc" style="font-size:1.1rem; color:#64748b; max-width:600px; line-height:1.8;">نظام صحي رائد لمراقبة مرضى القولون العصبي وسرطان القولون والتنبؤ المبكر باضطرابات الأمعاء باستخدام تقنيات الذكاء الاصطناعي الحديثة</p>
+      <div style="display:flex; gap:1rem; margin-top:2rem; flex-wrap:wrap; justify-content:center;">
+        <div style="background:linear-gradient(135deg,#009688,#00796b); color:white; padding:0.75rem 1.5rem; border-radius:2rem; font-weight:700; font-size:0.9rem;"><i class="fa-solid fa-microchip" style="margin-left:0.5rem;"></i><span id="tag1">ذكاء اصطناعي</span></div>
+        <div style="background:linear-gradient(135deg,#0ea5e9,#0284c7); color:white; padding:0.75rem 1.5rem; border-radius:2rem; font-weight:700; font-size:0.9rem;"><i class="fa-solid fa-watch" style="margin-left:0.5rem;"></i><span id="tag2">أجهزة ارتداء</span></div>
+        <div style="background:linear-gradient(135deg,#8b5cf6,#7c3aed); color:white; padding:0.75rem 1.5rem; border-radius:2rem; font-weight:700; font-size:0.9rem;"><i class="fa-solid fa-hospital" style="margin-left:0.5rem;"></i><span id="tag3">رعاية صحية ذكية</span></div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb1">مشروع Pregut الطبي</span><span id="fs1">الشريحة 1 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 2: Description -->
+  <div id="slide-desc" class="slide-view">
+    <div class="slide-header" style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="desc_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">وصف الابتكار</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
+        <div>
+          <p id="desc_text" style="font-size:1rem; color:#475569; line-height:1.8; margin-bottom:1.5rem;">Pregut هو نظام صحي ذكي متكامل، صُمم خصيصاً لدعم الرعاية الذاتية للمرضى الذين يعانون من اضطرابات مزمنة في الجهاز الهضمي، وبشكل خاص:</p>
+          <div style="display:grid; gap:1rem;">
+            <div class="tile" style="text-align:right;">
+              <i class="fa-solid fa-hospital-user" style="display:block; font-size:2rem; color:#009688; margin-bottom:0.75rem;"></i>
+              <h3 id="desc_tile1_title" style="font-size:1rem; font-weight:800; color:#1e293b; margin-bottom:0.4rem;">مرضى القولون العصبي</h3>
+              <p id="desc_tile1_desc" style="font-size:0.85rem; color:#64748b;">متابعة التغيرات الفورية والوقاية من التشنجات المؤلمة.</p>
+            </div>
+            <div class="tile" style="text-align:right;">
+              <i class="fa-solid fa-shield-virus" style="display:block; font-size:2rem; color:#009688; margin-bottom:0.75rem;"></i>
+              <h3 id="desc_tile2_title" style="font-size:1rem; font-weight:800; color:#1e293b; margin-bottom:0.4rem;">مرضى سرطان القولون</h3>
+              <p id="desc_tile2_desc" style="font-size:0.85rem; color:#64748b;">متابعة الحركة والمؤشرات بعد العمليات أو العلاج الطبي.</p>
+            </div>
+          </div>
+        </div>
+        <div style="background:linear-gradient(135deg,#e0f2f1,#b2dfdb); border:1px solid #80cbc4; border-radius:1.5rem; padding:2rem;">
+          <i class="fa-solid fa-gears" style="font-size:3rem; color:#00796b; margin-bottom:1rem; display:block;"></i>
+          <h3 id="desc_aside_title" style="font-size:1.3rem; font-weight:900; color:#004d40; margin-bottom:0.75rem;">الرعاية الوقائية الاستباقية</h3>
+          <p id="desc_aside_desc" style="color:#374151; line-height:1.8; font-size:0.95rem;">التحول من رصد الأعراض بعد حدوثها إلى التنبؤ الذكي بها وتفاديها تماماً.</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb2">مشروع Pregut الطبي</span><span id="fs2">الشريحة 2 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 3: Problem -->
+  <div id="slide-problem" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="prob_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">المشكلة الصحية التي يعالجها الابتكار</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
+        <div>
+          <p id="prob_text" style="font-size:1rem; color:#475569; margin-bottom:1.25rem; line-height:1.8;">يواجه مرضى القولون واضطرابات الأمعاء طيفاً واسعاً من الأعراض المزمنة والمؤثرة:</p>
+          <ul class="bullet-list">
+            <li><i class="fa-solid fa-circle-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="prob_bullet1">الإمساك المزمن أو الإسهال المتكرر.</span></li>
+            <li><i class="fa-solid fa-circle-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="prob_bullet2">الغازات والانتفاخ المستمر.</span></li>
+            <li><i class="fa-solid fa-circle-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="prob_bullet3">تشنجات واضطرابات حركة الأمعاء وآلام البطن الفجائية.</span></li>
+            <li><i class="fa-solid fa-circle-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="prob_bullet4">التغيرات الفجائية وغير المتوقعة في وظائف الجهاز الهضمي.</span></li>
+          </ul>
+        </div>
+        <div style="background:#fff5f5; border:1px solid #fecaca; border-radius:1.25rem; padding:1.75rem; border-right:5px solid #ef4444;" id="probCardBox">
+          <h3 id="prob_limit_title" style="font-size:1.1rem; font-weight:800; color:#dc2626; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-circle-xmark"></i> فجوات الحلول الحالية:</h3>
+          <div style="display:flex; flex-direction:column; gap:0.75rem; font-size:0.9rem; color:#374151; line-height:1.7;">
+            <p id="prob_limit1">1. معالجة الأعراض والتدخل الطبي يبدأ فقط بعد حدوث التهيج الفعلي وتدهور الحالة.</p>
+            <p id="prob_limit2">2. الاقتصار على المتابعة بالزيارات الدورية المتباعدة للمستشفى دون مراقبة مستمرة في بيئة المريض الحقيقية.</p>
+            <p id="prob_limit3">3. غياب أدوات التحليل التنبؤي الذكي التي تساعد على الوقاية الفورية.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb3">مشروع Pregut الطبي</span><span id="fs3">الشريحة 3 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 4: Stats -->
+  <div id="slide-stats" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="stats_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">أهمية المشكلة صحياً (إحصائيات)</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem;">
+        <div class="stat-card">
+          <div class="stat-number">24%</div>
+          <h3 id="stats_card1_title" style="font-size:1.1rem; font-weight:800; color:#1e293b; margin-bottom:0.75rem;">في المملكة العربية السعودية</h3>
+          <p id="stats_card1_desc" style="font-size:0.85rem; color:#64748b; line-height:1.6;">معدل انتشار القولون العصبي محلياً، مع تسجيل تزايد ملحوظ في الفئات الأكثر نشاطاً في المجتمع.</p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">17%</div>
+          <h3 id="stats_card2_title" style="font-size:1.1rem; font-weight:800; color:#1e293b; margin-bottom:0.75rem;">الانتشار العالمي</h3>
+          <p id="stats_card2_desc" style="font-size:0.85rem; color:#64748b; line-height:1.6;">النسبة التقديرية لانتشار متلازمة القولون العصبي عالياً حسب المراجعات البحثية الحديثة.</p>
+        </div>
+        <div class="stat-card" style="border-top-color:#ef4444;">
+          <div class="stat-number" style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <h3 id="stats_card3_title" style="font-size:1.1rem; font-weight:800; color:#1e293b; margin-bottom:0.75rem;">سرطان القولون</h3>
+          <p id="stats_card3_desc" style="font-size:0.85rem; color:#64748b; line-height:1.6;">يعد من أكثر السرطانات انتشاراً وخطورةً محلياً، مما يبرز أهمية الفحص الاستباقي والمراقبة الحثيثة.</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb4">مشروع Pregut الطبي</span><span id="fs4">الشريحة 4 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 5: Components -->
+  <div id="slide-components" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="comp_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">مكونات نظام Pregut المبتكر</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:center;">
+        <div class="hardware-visual">
+          <div class="hardware-device-card">
+            <i class="fa-solid fa-clock"></i>
+            <h4 id="hdw_card1_title">السوار الذكي</h4>
+            <p id="hdw_card1_desc">يتعقب النبض والتوتر بدقة.</p>
+          </div>
+          <div class="hardware-device-card" style="border-top-color:#0ea5e9;">
+            <i class="fa-solid fa-pager" style="color:#0ea5e9;"></i>
+            <h4 id="hdw_card2_title">حزام البطن</h4>
+            <p id="hdw_card2_desc">يرصد حركة وأصوات الأمعاء.</p>
+          </div>
+          <div class="hardware-device-card" style="border-top-color:#8b5cf6;">
+            <i class="fa-solid fa-mobile-screen" style="color:#8b5cf6;"></i>
+            <h4 id="hdw_card3_title">التطبيق الذكي</h4>
+            <p id="hdw_card3_desc">عرض التحليلات والتنبيهات.</p>
+          </div>
+          <div class="hardware-device-card" style="border-top-color:#f59e0b;">
+            <i class="fa-solid fa-brain" style="color:#f59e0b;"></i>
+            <h4 id="hdw_card4_title">محرك الذكاء الاصطناعي</h4>
+            <p id="hdw_card4_desc">تحليل تنبؤي متكامل.</p>
+          </div>
+        </div>
+        <div>
+          <ul class="bullet-list">
+            <li><i class="fa-solid fa-chevron-left" id="chevronIcon1" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="comp_bullet1"><strong>السوار الذكي:</strong> لجمع ومتابعة المؤشرات الحيوية اليومية المرتبطة بالحالة النفسية والجسدية.</span></li>
+            <li><i class="fa-solid fa-chevron-left" id="chevronIcon2" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="comp_bullet2"><strong>حساس البطن (الحزام):</strong> حزام مرن ومريح للغاية لالتقاط وتحليل أصوات الأمعاء الداخلية بشكل مباشر.</span></li>
+            <li><i class="fa-solid fa-chevron-left" id="chevronIcon3" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="comp_bullet3"><strong>التطبيق المحمول:</strong> منصة عرض المعلومات السهلة والتحليلات للمريض والطبيب.</span></li>
+            <li><i class="fa-solid fa-chevron-left" id="chevronIcon4" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="comp_bullet4"><strong>الذكاء الاصطناعي:</strong> محرك التحليلات التنبؤي المتكامل لرصد أي أنماط غير طبيعية.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb5">مشروع Pregut الطبي</span><span id="fs5">الشريحة 5 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 6: Smart Band -->
+  <div id="slide-band" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="band_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">وظيفة السوار الذكي</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:center;">
+        <div>
+          <p id="band_text" style="font-size:1rem; color:#475569; margin-bottom:1.5rem; line-height:1.8;">يقوم السوار بمتابعة ورصد مستويات القياسات الحيوية بشكل دوري لفهم العوامل الخارجية التي قد تحفز تهيج القولون:</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="tile"><i class="fa-solid fa-heart-pulse"></i><h3 id="band_tile1">معدل نبض القلب</h3></div>
+            <div class="tile"><i class="fa-solid fa-brain"></i><h3 id="band_tile2">مستويات التوتر والإجهاد</h3></div>
+            <div class="tile"><i class="fa-solid fa-moon"></i><h3 id="band_tile3">جودة وفترات النوم</h3></div>
+            <div class="tile"><i class="fa-solid fa-person-running"></i><h3 id="band_tile4">النشاط البدني ونمط الحياة</h3></div>
+          </div>
+        </div>
+        <div style="background:linear-gradient(135deg,#e0f2f1,#b2dfdb); border:1px solid #80cbc4; border-radius:1.5rem; padding:2rem;">
+          <i class="fa-solid fa-chart-line" style="font-size:3rem; color:#009688; margin-bottom:1rem; display:block;"></i>
+          <h3 id="band_aside_title" style="font-size:1.2rem; font-weight:900; color:#004d40; margin-bottom:0.75rem;">ربط التغيرات</h3>
+          <p id="band_aside_desc" style="color:#374151; line-height:1.8; font-size:0.95rem;">يرتبط تشنج القولون بشكل مباشر بحالات التوتر النفسي وجودة النوم. يساعد تجميع هذه المعلومات في بناء خوارزمية تنبؤية فائقة الدقة والخصوصية لكل مريض.</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb6">مشروع Pregut الطبي</span><span id="fs6">الشريحة 6 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 7: Sensor -->
+  <div id="slide-sensor" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="sensor_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">وظيفة الحساس المثبت على البطن</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:center;">
+        <div style="background:linear-gradient(135deg,#e0f2f1,#b2dfdb); border:1px solid #80cbc4; border-radius:1.5rem; padding:2rem;">
+          <i class="fa-solid fa-wave-square" style="font-size:3.5rem; color:#009688; margin-bottom:1rem; display:block;"></i>
+          <h3 id="sensor_aside_title" style="font-size:1.2rem; font-weight:900; color:#004d40; margin-bottom:0.75rem;">التقنية الصوتية الحيوية</h3>
+          <p id="sensor_aside_desc" style="color:#374151; line-height:1.8; font-size:0.95rem;">من خلال توظيف تقنية الميكروفونات فائقة الحساسية وخوارزميات الفلترة المتقدمة، يتمكن الحزام من التقاط أصوات العضلات المعوية وحركتها بدقة تامة وبصورة مريحة بالكامل للاستخدام اليومي المعتاد.</p>
+        </div>
+        <div>
+          <ul class="bullet-list">
+            <li><i class="fa-solid fa-angle-left" id="angleIcon1" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="sensor_bullet1"><strong>التقاط أصوات الأمعاء:</strong> تسجيل الترددات الحركية بدقة وعزل الضوضاء الخارجية.</span></li>
+            <li><i class="fa-solid fa-angle-left" id="angleIcon2" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="sensor_bullet2"><strong>تحليل حركة الجهاز الهضمي:</strong> تتبع ديناميكية العضلات الهاضمة وسرعتها.</span></li>
+            <li><i class="fa-solid fa-angle-left" id="angleIcon3" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="sensor_bullet3"><strong>رصد معدل الحركة:</strong> الكشف الفوري عن أي تباطؤ أو تسارع غير طبيعي قد يشير لنوبات إسهال أو إمساك.</span></li>
+            <li><i class="fa-solid fa-angle-left" id="angleIcon4" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="sensor_bullet4"><strong>اكتشاف الأنماط الحرجة:</strong> مقارنة الأصوات اللحظية بالأنماط القياسية المسجلة مسبقاً للتنبؤ الفوري.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb7">مشروع Pregut الطبي</span><span id="fs7">الشريحة 7 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 8: Display -->
+  <div id="slide-display" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="display_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">طريقة عرض البيانات وتحليلها</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:center;">
+        <div class="phone-mockup">
+          <div class="phone-header"><span>Pregut App</span><span>09:41 AM</span></div>
+          <div class="phone-circular-progress">
+            <div class="phone-progress-text">
+              <h4 style="color:white; font-size:2rem; font-weight:900; margin:0;">78%</h4>
+              <span id="phn_progress_lbl" style="color:rgba(255,255,255,0.8); font-size:0.8rem;">استقرار الأمعاء</span>
+            </div>
+          </div>
+          <div class="phone-stats-grid">
+            <div class="phone-stat-tile"><i class="fa-solid fa-heart-pulse" style="color:#009688; font-size:1.25rem; margin-bottom:0.25rem; display:block;"></i><h5 style="margin:0; color:white; font-size:0.9rem;">72 BPM</h5><span id="phn_stat_lbl1" style="font-size:0.7rem; color:#64748b;">نبض القلب</span></div>
+            <div class="phone-stat-tile"><i class="fa-solid fa-brain" style="color:#009688; font-size:1.25rem; margin-bottom:0.25rem; display:block;"></i><h5 id="phn_stat_val2" style="margin:0; color:white; font-size:0.9rem;">منخفض</h5><span id="phn_stat_lbl2" style="font-size:0.7rem; color:#64748b;">التوتر</span></div>
+          </div>
+        </div>
+        <div>
+          <ul class="bullet-list">
+            <li><i class="fa-solid fa-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="display_bullet1"><strong>عرض الحالة اليومية:</strong> لوحة تحكم سهلة تبين استقرار الأمعاء ونسب الحركة المئوية.</span></li>
+            <li><i class="fa-solid fa-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="display_bullet2"><strong>تحليل الأنماط الصحية:</strong> ربط الأعراض الهضمية بالأطعمة المستهلكة أو التوتر أو قلة النوم.</span></li>
+            <li><i class="fa-solid fa-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="display_bullet3"><strong>التنبيهات الذكية المبكرة:</strong> استلام إشارات وتوصيات استباقية مثل: "تجنب المحفزات الآن"، أو "زيادة شرب السوائل".</span></li>
+            <li><i class="fa-solid fa-check" style="color:#009688; position:absolute; top:4px; right:0;"></i><span id="display_bullet4"><strong>التقارير الطبية الدورية:</strong> ملفات ملخصة تتيح للطبيب تتبع استجابة المريض للخطة العلاجية بمرونة تامة.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb8">مشروع Pregut الطبي</span><span id="fs8">الشريحة 8 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 9: AI Simulation -->
+  <div id="slide-workflow" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.25rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="sim_header" style="font-size:1.6rem; font-weight:900; color:#004d40;">محاكاة قرار الذكاء الاصطناعي (تجربة تفاعلية مباشرة)</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div class="dashboard-grid">
+        <div class="metric-card">
+          <h3 id="sim_metric1_title">معدل نبض القلب (السوار)</h3>
+          <div class="value" id="pulseRate">72 BPM</div>
+          <i class="fa-solid fa-heart-pulse icon-placeholder"></i>
+        </div>
+        <div class="metric-card">
+          <h3 id="sim_metric2_title">مؤشر حركة الأمعاء (الحساس)</h3>
+          <div class="value" id="bowelState">مستقر وطبيعي</div>
+          <i class="fa-solid fa-gauge-high icon-placeholder"></i>
+        </div>
+        <div class="metric-card">
+          <h3 id="sim_metric3_title">معدل خطر النوبات التنبؤي</h3>
+          <div class="value" id="riskState" style="color:#009688;">آمن جداً (منخفض)</div>
+          <i class="fa-solid fa-triangle-exclamation icon-placeholder"></i>
+        </div>
+      </div>
+      <div class="simulator-layout">
+        <div class="wave-panel">
+          <h3 id="sim_panel_title" style="font-size:0.9rem; font-weight:800; color:#004d40; margin-bottom:0.5rem;"><i class="fa-solid fa-tower-broadcast"></i> رصد الإشارات الحركية والصوتية اللحظي (محاكاة حية):</h3>
+          <div class="wave-visualizer" id="visualizer">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+          <div class="sim-actions">
+            <button class="btn btn-success" onclick="updateSimulator('normal')" id="sim_btn_normal">نمط حركة طبيعي</button>
+            <button class="btn btn-warning" onclick="updateSimulator('warning')" id="sim_btn_warning">نمط كسل معوي</button>
+            <button class="btn btn-danger" onclick="updateSimulator('critical')" id="sim_btn_critical">نمط تشنج حاد</button>
+          </div>
+        </div>
+        <div style="background:white; padding:1.5rem; border-radius:1rem; border:1px solid #e2e8f0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <i class="fa-solid fa-network-wired" style="font-size:2.5rem; color:#009688; margin-bottom:1rem;"></i>
+          <h4 id="sim_aside_title" style="font-size:1rem; font-weight:800; color:#1e293b; margin-bottom:0.5rem;">معالجة الذكاء الاصطناعي</h4>
+          <p id="sim_aside_desc" style="font-size:0.82rem; color:#64748b; line-height:1.6;">البروتوتايب يوضح كيفية استلام وتحليل الذكاء الاصطناعي للإشارات بشكل فوري وتحديد الإجراء الطبي والوقائي المناسب.</p>
+        </div>
+      </div>
+      <div class="notification-bar" id="notifBar">
+        <i class="fa-solid fa-circle-check" style="font-size:1.3rem; color:#009688; flex-shrink:0;"></i>
+        <div id="notifText"><strong>حالة الرصد الحالية:</strong> مستويات المؤشرات الحيوية وحركات الأمعاء مستقرة ومثالية بالكامل.</div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb9">مشروع Pregut الطبي</span><span id="fs9">الشريحة 9 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 10: Benefits -->
+  <div id="slide-benefits" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="benefits_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">الفوائد العملية والسريرية للابتكار</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem;">
+        <div class="tile"><i class="fa-solid fa-eye"></i><h3 id="benefits_tile1_title">مراقبة مستمرة</h3><p id="benefits_tile1_desc">تتبع دائم ومستمر لمؤشرات حركة القولون على مدار الساعة بكفاءة عالية وبدون تدخل بشري مستمر.</p></div>
+        <div class="tile"><i class="fa-solid fa-hourglass-start"></i><h3 id="benefits_tile2_title">تنبؤ استباقي مبكر</h3><p id="benefits_tile2_desc">توقع النوبات والاضطرابات المزعجة قبل حدوثها لتجنب الألم والتفاقم الفجائي للأعراض.</p></div>
+        <div class="tile"><i class="fa-solid fa-heart-shield"></i><h3 id="benefits_tile3_title">تقليل المضاعفات</h3><p id="benefits_tile3_desc">حماية مرضى سرطان القولون والقولون العصبي من الوصول للحالات الحادة أو المضاعفات الخطيرة.</p></div>
+        <div class="tile"><i class="fa-solid fa-face-smile"></i><h3 id="benefits_tile4_title">تحسين جودة الحياة</h3><p id="benefits_tile4_desc">تمكين المرضى من عيش حياتهم المعتادة بثقة وراحة عالية من خلال المتابعة الذكية والدعم الوقائي.</p></div>
+        <div class="tile"><i class="fa-solid fa-house-chimney-medical"></i><h3 id="benefits_tile5_title">دعم المتابعة المنزلية</h3><p id="benefits_tile5_desc">تقليل وتخفيف العبء على عيادات الجهاز الهضمي وأقسام الطوارئ عبر تمكين المراقبة المنزلية الذكية.</p></div>
+        <div class="tile"><i class="fa-solid fa-hand-holding-medical"></i><h3 id="benefits_tile6_title">اتخاذ قرارات يومية صحيحة</h3><p id="benefits_tile6_desc">توجيه المريض لنمط تغذية ونوم وحياة أفضل بناءً على بياناته الحيوية الدقيقة وفائقة الخصوصية.</p></div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb10">مشروع Pregut الطبي</span><span id="fs10">الشريحة 10 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 11: Alert -->
+  <div id="slide-alert" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="alert_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">تنبيه علمي هام والحدود الطبية</h1>
+    </div>
+    <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+      <div class="warning-box" style="max-width:700px; width:100%;">
+        <i class="fa-solid fa-shield-halved"></i>
+        <p id="alert_text" style="font-size:1.1rem; color:#374151; line-height:1.9; font-weight:500;">"إن نظام Pregut المبتكر لا يهدف إطلاقاً إلى التشخيص الطبي المباشر أو الاستغناء عن الرأي السريري المختص، وإنما يُستخدم كوسيلة تقنية وذكية للمراقبة الصحية الذاتية والدعم الوقائي الاستباقي للحد من المضاعفات المحتملة وتحسين جودة الحياة."</p>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb11">مشروع Pregut الطبي</span><span id="fs11">الشريحة 11 من 12</span></div>
+  </div>
+
+  <!-- SLIDE 12: References & Contact -->
+  <div id="slide-references" class="slide-view">
+    <div style="padding-bottom:1rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0;">
+      <h1 id="ref_header" style="font-size:1.75rem; font-weight:900; color:#004d40;">المراجع الطبية المعتمدة ونماذج التواصل</h1>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
+        <div>
+          <h3 id="ref_section_title" style="font-size:1rem; font-weight:800; color:#004d40; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-book-bookmark"></i> المراجع العلمية المعتمدة</h3>
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <div class="ref-card"><div><h4 id="ref_title1" style="font-size:0.85rem; font-weight:800; color:#1e293b; margin:0 0 0.2rem;">دراسة انتشار القولون العصبي بالسعودية</h4><p style="font-size:0.75rem; color:#64748b; margin:0;">PubMed - IBS in Saudi Arabia</p></div><a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" class="ref-link-btn" id="ref_go1">الانتقال</a></div>
+            <div class="ref-card"><div><h4 id="ref_title2" style="font-size:0.85rem; font-weight:800; color:#1e293b; margin:0 0 0.2rem;">مراجعة علمية لانتشار IBS بالوطن العربي</h4><p style="font-size:0.75rem; color:#64748b; margin:0;">IBS Prevalence in Arab World</p></div><a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" class="ref-link-btn" id="ref_go2">الانتقال</a></div>
+            <div class="ref-card"><div><h4 id="ref_title3" style="font-size:0.85rem; font-weight:800; color:#1e293b; margin:0 0 0.2rem;">الدراسة العالمية لانتشار القولون</h4><p style="font-size:0.75rem; color:#64748b; margin:0;">Global IBS Prevalence Study</p></div><a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" class="ref-link-btn" id="ref_go3">الانتقال</a></div>
+            <div class="ref-card"><div><h4 id="ref_title4" style="font-size:0.85rem; font-weight:800; color:#1e293b; margin:0 0 0.2rem;">توعية سرطان القولون - وزارة الصحة</h4><p style="font-size:0.75rem; color:#64748b; margin:0;">Saudi MOH Colorectal Cancer Awareness</p></div><a href="https://www.moh.gov.sa" target="_blank" class="ref-link-btn" id="ref_go4">الانتقال</a></div>
+          </div>
+        </div>
+        <div style="background:white; padding:1.5rem; border-radius:1rem; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <h3 id="form_title" style="font-size:1rem; font-weight:800; color:#004d40; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem;"><i class="fa-solid fa-envelope-open-text"></i> نموذج شراكة وبحث طبي</h3>
+          <p id="form_subtitle" style="font-size:0.8rem; color:#64748b; margin-bottom:1rem;">تواصل معنا لمناقشة فرص تطبيق أو تجربة نظام Pregut داخل مركزكم الصحي الموقر.</p>
+          
+          <!-- Formspree real form -->
+          <form id="contactForm" action="https://formspree.io/f/mpqnabqq" method="POST" onsubmit="handleFormSubmit(event)">
+            <div class="contact-form">
+              <div class="form-group col-span-2">
+                <label id="lblCenter">اسم المركز الصحي / المستشفى</label>
+                <input type="text" name="center" id="center" placeholder='مثال: مدينة الملك عبد الله الطبية' required>
+              </div>
+              <div class="form-group">
+                <label id="lblEmail">البريد الإلكتروني الرسمي</label>
+                <input type="email" name="email" id="email" placeholder="name@center.gov.sa" required>
+              </div>
+              <div class="form-group">
+                <label id="lblPhone">رقم التواصل / التحويلة</label>
+                <input type="text" name="phone" id="phone" placeholder="+966...">
+              </div>
+              <div class="form-group col-span-2">
+                <label id="lblMsg">تفاصيل الاهتمام أو الاستفسار</label>
+                <textarea name="message" id="msg" rows="3" placeholder="كيف ترغبون في تجربة نظام Pregut لديكم؟" required></textarea>
+              </div>
+              <div class="form-group col-span-2">
+                <button type="submit" class="btn btn-success" id="btnSubmitForm" style="padding:0.75rem; font-size:0.95rem; border-radius:0.5rem; width:100%;">
+                  <i class="fa-solid fa-paper-plane" style="margin-left:0.5rem;"></i>
+                  <span id="btnSubmitText">إرسال الطلب</span>
+                </button>
+              </div>
+            </div>
+          </form>
+          
+          <!-- Success message (hidden by default) -->
+          <div id="successMsg" style="display:none; background:#ecfdf5; border:1px solid #86efac; border-radius:0.75rem; padding:1.25rem; text-align:center; margin-top:0.75rem;">
+            <i class="fa-solid fa-circle-check" style="font-size:2rem; color:#009688; margin-bottom:0.5rem; display:block;"></i>
+            <p style="font-weight:800; color:#004d40; margin:0 0 0.25rem;" id="successTitle">تم الإرسال بنجاح! ✅</p>
+            <p style="font-size:0.85rem; color:#64748b; margin:0;" id="successSub">سنتواصل معكم قريباً عبر البريد الإلكتروني.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><span id="fb12">مشروع Pregut الطبي</span><span id="fs12">الشريحة 12 من 12</span></div>
+  </div>
+
+</main>
+
+<script>
+let currentLang = 'ar';
+
+const T = {
+  ar: {
+    brand:'نظام Pregut', lang_btn:'English',
+    nh1:'التعريف والمشكلة', nh2:'التقنية والوظائف', nh3:'النتائج والمراجع',
+    n_intro:'واجهة الابتكار', n_desc:'وصف الابتكار', n_problem:'المشكلة الصحية', n_stats:'أهمية المشكلة صحياً',
+    n_components:'مكونات النظام', n_band:'وظيفة السوار الذكي', n_sensor:'الحساس البطني', n_display:'عرض البيانات والتحليل', n_workflow:'محاكاة الذكاء الاصطناعي',
+    n_benefits:'الفوائد العملية', n_alert:'تنبيه علمي هام', n_references:'التواصل والمراجع',
+    intro_title:'نظام Pregut للارتداء الذكي القابل للارتداء',
+    intro_desc:'نظام صحي رائد لمراقبة مرضى القولون العصبي وسرطان القولون والتنبؤ المبكر باضطرابات الأمعاء باستخدام تقنيات الذكاء الاصطناعي الحديثة',
+    tag1:'ذكاء اصطناعي', tag2:'أجهزة ارتداء', tag3:'رعاية صحية ذكية',
+    desc_header:'وصف الابتكار',
+    desc_text:'Pregut هو نظام صحي ذكي متكامل، صُمم خصيصاً لدعم الرعاية الذاتية للمرضى الذين يعانون من اضطرابات مزمنة في الجهاز الهضمي، وبشكل خاص:',
+    desc_tile1_title:'مرضى القولون العصبي', desc_tile1_desc:'متابعة التغيرات الفورية والوقاية من التشنجات المؤلمة.',
+    desc_tile2_title:'مرضى سرطان القولون', desc_tile2_desc:'متابعة الحركة والمؤشرات بعد العمليات أو العلاج الطبي.',
+    desc_aside_title:'الرعاية الوقائية الاستباقية',
+    desc_aside_desc:'التحول من رصد الأعراض بعد حدوثها إلى التنبؤ الذكي بها وتفاديها تماماً.',
+    prob_header:'المشكلة الصحية التي يعالجها الابتكار',
+    prob_text:'يواجه مرضى القولون واضطرابات الأمعاء طيفاً واسعاً من الأعراض المزمنة والمؤثرة:',
+    prob_bullet1:'الإمساك المزمن أو الإسهال المتكرر.',
+    prob_bullet2:'الغازات والانتفاخ المستمر.',
+    prob_bullet3:'تشنجات واضطرابات حركة الأمعاء وآلام البطن الفجائية.',
+    prob_bullet4:'التغيرات الفجائية وغير المتوقعة في وظائف الجهاز الهضمي.',
+    prob_limit_title:'<i class="fa-solid fa-circle-xmark"></i> فجوات الحلول الحالية:',
+    prob_limit1:'1. معالجة الأعراض والتدخل الطبي يبدأ فقط بعد حدوث التهيج الفعلي وتدهور الحالة.',
+    prob_limit2:'2. الاقتصار على المتابعة بالزيارات الدورية المتباعدة للمستشفى دون مراقبة مستمرة في بيئة المريض الحقيقية.',
+    prob_limit3:'3. غياب أدوات التحليل التنبؤي الذكي التي تساعد على الوقاية الفورية.',
+    stats_header:'أهمية المشكلة صحياً (إحصائيات)',
+    stats_card1_title:'في المملكة العربية السعودية', stats_card1_desc:'معدل انتشار القولون العصبي محلياً، مع تسجيل تزايد ملحوظ في الفئات الأكثر نشاطاً في المجتمع.',
+    stats_card2_title:'الانتشار العالمي', stats_card2_desc:'النسبة التقديرية لانتشار متلازمة القولون العصبي عالياً حسب المراجعات البحثية الحديثة.',
+    stats_card3_title:'سرطان القولون', stats_card3_desc:'يعد من أكثر السرطانات انتشاراً وخطورةً محلياً، مما يبرز أهمية الفحص الاستباقي والمراقبة الحثيثة.',
+    comp_header:'مكونات نظام Pregut المبتكر',
+    hdw_card1_title:'السوار الذكي', hdw_card1_desc:'يتعقب النبض والتوتر بدقة.',
+    hdw_card2_title:'حزام البطن', hdw_card2_desc:'يرصد حركة وأصوات الأمعاء.',
+    hdw_card3_title:'التطبيق الذكي', hdw_card3_desc:'عرض التحليلات والتنبيهات.',
+    hdw_card4_title:'محرك الذكاء الاصطناعي', hdw_card4_desc:'تحليل تنبؤي متكامل.',
+    comp_bullet1:'<strong>السوار الذكي:</strong> لجمع ومتابعة المؤشرات الحيوية اليومية المرتبطة بالحالة النفسية والجسدية.',
+    comp_bullet2:'<strong>حساس البطن (الحزام):</strong> حزام مرن ومريح للغاية لالتقاط وتحليل أصوات الأمعاء الداخلية بشكل مباشر.',
+    comp_bullet3:'<strong>التطبيق المحمول:</strong> منصة عرض المعلومات السهلة والتحليلات للمريض والطبيب.',
+    comp_bullet4:'<strong>الذكاء الاصطناعي:</strong> محرك التحليلات التنبؤي المتكامل لرصد أي أنماط غير طبيعية.',
+    band_header:'وظيفة السوار الذكي',
+    band_text:'يقوم السوار بمتابعة ورصد مستويات القياسات الحيوية بشكل دوري لفهم العوامل الخارجية التي قد تحفز تهيج القولون:',
+    band_tile1:'معدل نبض القلب', band_tile2:'مستويات التوتر والإجهاد', band_tile3:'جودة وفترات النوم', band_tile4:'النشاط البدني ونمط الحياة',
+    band_aside_title:'ربط التغيرات',
+    band_aside_desc:'يرتبط تشنج القولون بشكل مباشر بحالات التوتر النفسي وجودة النوم. يساعد تجميع هذه المعلومات في بناء خوارزمية تنبؤية فائقة الدقة والخصوصية لكل مريض.',
+    sensor_header:'وظيفة الحساس المثبت على البطن',
+    sensor_aside_title:'التقنية الصوتية الحيوية',
+    sensor_aside_desc:'من خلال توظيف تقنية الميكروفونات فائقة الحساسية وخوارزميات الفلترة المتقدمة، يتمكن الحزام من التقاط أصوات العضلات المعوية وحركتها بدقة تامة وبصورة مريحة بالكامل للاستخدام اليومي المعتاد.',
+    sensor_bullet1:'<strong>التقاط أصوات الأمعاء:</strong> تسجيل الترددات الحركية بدقة وعزل الضوضاء الخارجية.',
+    sensor_bullet2:'<strong>تحليل حركة الجهاز الهضمي:</strong> تتبع ديناميكية العضلات الهاضمة وسرعتها.',
+    sensor_bullet3:'<strong>رصد معدل الحركة:</strong> الكشف الفوري عن أي تباطؤ أو تسارع غير طبيعي قد يشير لنوبات إسهال أو إمساك.',
+    sensor_bullet4:'<strong>اكتشاف الأنماط الحرجة:</strong> مقارنة الأصوات اللحظية بالأنماط القياسية المسجلة مسبقاً للتنبؤ الفوري.',
+    display_header:'طريقة عرض البيانات وتحليلها',
+    display_bullet1:'<strong>عرض الحالة اليومية:</strong> لوحة تحكم سهلة تبين استقرار الأمعاء ونسب الحركة المئوية.',
+    display_bullet2:'<strong>تحليل الأنماط الصحية:</strong> ربط الأعراض الهضمية بالأطعمة المستهلكة أو التوتر أو قلة النوم.',
+    display_bullet3:'<strong>التنبيهات الذكية المبكرة:</strong> استلام إشارات وتوصيات استباقية مثل: "تجنب المحفزات الآن"، أو "زيادة شرب السوائل".',
+    display_bullet4:'<strong>التقارير الطبية الدورية:</strong> ملفات ملخصة تتيح للطبيب تتبع استجابة المريض للخطة العلاجية بمرونة تامة.',
+    phn_progress_lbl:'استقرار الأمعاء', phn_stat_lbl1:'نبض القلب', phn_stat_val2:'منخفض', phn_stat_lbl2:'التوتر',
+    sim_header:'محاكاة قرار الذكاء الاصطناعي (تجربة تفاعلية مباشرة)',
+    sim_metric1_title:'معدل نبض القلب (السوار)', sim_metric2_title:'مؤشر حركة الأمعاء (الحساس)', sim_metric3_title:'معدل خطر النوبات التنبؤي',
+    sim_panel_title:'<i class="fa-solid fa-tower-broadcast"></i> رصد الإشارات الحركية والصوتية اللحظي (محاكاة حية):',
+    sim_btn_normal:'نمط حركة طبيعي', sim_btn_warning:'نمط كسل معوي', sim_btn_critical:'نمط تشنج حاد',
+    sim_aside_title:'معالجة الذكاء الاصطناعي',
+    sim_aside_desc:'البروتوتايب يوضح كيفية استلام وتحليل الذكاء الاصطناعي للإشارات بشكل فوري وتحديد الإجراء الطبي والوقائي المناسب.',
+    benefits_header:'الفوائد العملية والسريرية للابتكار',
+    benefits_tile1_title:'مراقبة مستمرة', benefits_tile1_desc:'تتبع دائم ومستمر لمؤشرات حركة القولون على مدار الساعة بكفاءة عالية وبدون تدخل بشري مستمر.',
+    benefits_tile2_title:'تنبؤ استباقي مبكر', benefits_tile2_desc:'توقع النوبات والاضطرابات المزعجة قبل حدوثها لتجنب الألم والتفاقم الفجائي للأعراض.',
+    benefits_tile3_title:'تقليل المضاعفات', benefits_tile3_desc:'حماية مرضى سرطان القولون والقولون العصبي من الوصول للحالات الحادة أو المضاعفات الخطيرة.',
+    benefits_tile4_title:'تحسين جودة الحياة', benefits_tile4_desc:'تمكين المرضى من عيش حياتهم المعتادة بثقة وراحة عالية من خلال المتابعة الذكية والدعم الوقائي.',
+    benefits_tile5_title:'دعم المتابعة المنزلية', benefits_tile5_desc:'تقليل وتخفيف العبء على عيادات الجهاز الهضمي وأقسام الطوارئ عبر تمكين المراقبة المنزلية الذكية.',
+    benefits_tile6_title:'اتخاذ قرارات يومية صحيحة', benefits_tile6_desc:'توجيه المريض لنمط تغذية ونوم وحياة أفضل بناءً على بياناته الحيوية الدقيقة وفائقة الخصوصية.',
+    alert_header:'تنبيه علمي هام والحدود الطبية',
+    alert_text:'"إن نظام Pregut المبتكر لا يهدف إطلاقاً إلى التشخيص الطبي المباشر أو الاستغناء عن الرأي السريري المختص، وإنما يُستخدم كوسيلة تقنية وذكية للمراقبة الصحية الذاتية والدعم الوقائي الاستباقي للحد من المضاعفات المحتملة وتحسين جودة الحياة."',
+    ref_header:'المراجع الطبية المعتمدة ونماذج التواصل',
+    ref_section_title:'المراجع العلمية المعتمدة',
+    ref_title1:'دراسة انتشار القولون العصبي بالسعودية', ref_title2:'مراجعة علمية لانتشار IBS بالوطن العربي', ref_title3:'الدراسة العالمية لانتشار القولون', ref_title4:'توعية سرطان القولون - وزارة الصحة',
+    ref_go:'الانتقال', form_title:'نموذج شراكة وبحث طبي',
+    form_subtitle:'تواصل معنا لمناقشة فرص تطبيق أو تجربة نظام Pregut داخل مركزكم الصحي الموقر.',
+    lblCenter:'اسم المركز الصحي / المستشفى', center_ph:'مثال: مدينة الملك عبد الله الطبية',
+    lblEmail:'البريد الإلكتروني الرسمي',
+    lblPhone:'رقم التواصل / التحويلة',
+    lblMsg:'تفاصيل الاهتمام أو الاستفسار', msg_ph:'كيف ترغبون في تجربة نظام Pregut لديكم؟',
+    btnSubmit:'إرسال الطلب',
+    footer_brand:'مشروع Pregut الطبي', footer_slide:'الشريحة', footer_of:'من',
+    bowel_normal:'مستقر وطبيعي', bowel_warning:'تباطؤ وخمول معوي', bowel_critical:'تشنج وتقلص حركي متسارع',
+    risk_normal:'آمن جداً (منخفض)', risk_warning:'متوسطة (تنبيه وقائي)', risk_critical:'مرتفعة (خطر نوبة)',
+    notif_normal:'<strong>حالة الرصد الحالية:</strong> مستويات المؤشرات الحيوية وحركات الأمعاء مستقرة ومثالية بالكامل.',
+    notif_warning:'<strong>توصية وقائية ذكية:</strong> تم رصد انخفاض ملحوظ في نشاط الأمعاء وصوت الهضم. يُنصح المريض بزيادة استهلاك المياه فوراً وتفادي الوجبات الدسمة.',
+    notif_critical:'<strong>تنبيه طبي عاجل:</strong> تم اكتشاف نمط صوتي وتشنج حاد في القولون العصبي. تم إرسال تنبيه عاجل للمريض للالتزام ببروتوكوله الطبي والوقائي والاتصال الفوري بمزود الرعاية.',
+    success_msg: (c) => `شكراً جزيلاً لاهتمامكم! تم تسجيل اهتمام من جهة (${c}) بنجاح. سنقوم بالتواصل معكم عبر البريد الإلكتروني الرسمي قريباً.`
+  },
+  en: {
+    brand:'Pregut System', lang_btn:'العربية',
+    nh1:'Introduction & Issues', nh2:'Technology & Logic', nh3:'Results & References',
+    n_intro:'Cover Page', n_desc:'Project Description', n_problem:'Health Issues', n_stats:'Global & Local Stats',
+    n_components:'System Components', n_band:'Smart Band', n_sensor:'Abdominal Sensor', n_display:'App & Analysis', n_workflow:'AI Decision Engine',
+    n_benefits:'Clinical Benefits', n_alert:'Medical Disclaimer', n_references:'Contact & References',
+    intro_title:'Pregut Smart Wearable System',
+    intro_desc:'An innovative AI-powered wearable system designed to monitor IBS and colorectal cancer patients for early prediction and prevention of bowel disorders.',
+    tag1:'Artificial Intelligence', tag2:'Wearable Devices', tag3:'Smart Healthcare',
+    desc_header:'Innovation Description',
+    desc_text:'Pregut is a comprehensive smart wearable health system built specifically to support patients suffering from chronic digestive tract disorders, particularly:',
+    desc_tile1_title:'IBS Patients', desc_tile1_desc:'Continuous monitoring of bowel movement and prevention of sudden, painful spasms.',
+    desc_tile2_title:'Colorectal Cancer Patients', desc_tile2_desc:'Tracking physiological changes post-surgery or post-treatment.',
+    desc_aside_title:'Proactive Healthcare', desc_aside_desc:'Shifting medical care from reacting to symptoms after they flare up to predicting them intelligently and preventing pain beforehand.',
+    prob_header:'Health Problems Addressed',
+    prob_text:'Patients with colon and bowel disorders face severe recurring symptoms daily:',
+    prob_bullet1:'Chronic constipation or frequent diarrhea episodes.',
+    prob_bullet2:'Persistent gas, bloating, and stomach distension.',
+    prob_bullet3:'Painful abdominal cramps and sudden, abnormal intestinal contractions.',
+    prob_bullet4:'Sudden physiological changes in gastrointestinal functions.',
+    prob_limit_title:'<i class="fa-solid fa-circle-xmark"></i> Current Limitations:',
+    prob_limit1:'1. Medical interventions only start after the symptoms have already flared up and worsened.',
+    prob_limit2:'2. Relying only on sporadic, periodic outpatient check-ups without real-time tracking in the patient\'s home environment.',
+    prob_limit3:'3. Absolute absence of predictive analytics to warn patients of coming painful spasms.',
+    stats_header:'Scientific & Clinical Significance',
+    stats_card1_title:'In Saudi Arabia', stats_card1_desc:'Average local prevalence rate of IBS, showing a high concentration among the most productive young age groups in society.',
+    stats_card2_title:'Global Prevalence', stats_card2_desc:'Estimated upper bound of IBS prevalence worldwide according to recent international gastrointestinal registries.',
+    stats_card3_title:'Colorectal Cancer', stats_card3_desc:'One of the most common and dangerous cancers locally, making proactive post-treatment tracking essential.',
+    comp_header:'Our Smart Wearable Components',
+    hdw_card1_title:'Smart Wristband', hdw_card1_desc:'Tracks HR & Stress efficiently.',
+    hdw_card2_title:'Abdominal Belt', hdw_card2_desc:'Monitors intestinal motility.',
+    hdw_card3_title:'Mobile App', hdw_card3_desc:'Displays analytics and alerts.',
+    hdw_card4_title:'AI Engine', hdw_card4_desc:'Integrated predictive analysis.',
+    comp_bullet1:'<strong>Smart Band:</strong> Tracks key daily physiological markers linked to stress and physical activity.',
+    comp_bullet2:'<strong>Abdominal Sensor:</strong> A soft, highly flexible and comfortable belt that picks up bowel sounds directly.',
+    comp_bullet3:'<strong>Mobile App:</strong> A seamless interface showing current status, warning alerts, and physician reports.',
+    comp_bullet4:'<strong>AI Engine:</strong> Processes and analyzes data to predict abnormalities and prevent sudden complications.',
+    band_header:'Smart Band Functionality',
+    band_text:'The wristband continuously measures vital bio-signals to identify lifestyle stressors affecting the digestive tract:',
+    band_tile1:'Heart Rate (HR)', band_tile2:'Stress & Tension Levels', band_tile3:'Sleep Quality & Cycles', band_tile4:'Physical Activity Tracking',
+    band_aside_title:'Correlating Variables',
+    band_aside_desc:'Intestinal spasms are closely linked with high mental stress, anxiety, and sleep deprivation. Aggregating these daily variables allows the AI to customize the predictive model specifically to each individual.',
+    sensor_header:'Abdominal Sensor Belt',
+    sensor_aside_title:'Acoustic Biomechatronics',
+    sensor_aside_desc:'Utilizing specialized piezoelectric micro-microphones and state-of-the-art frequency filters, the sensor isolates external ambient noise to record intestinal sounds comfortably and non-invasively throughout the day.',
+    sensor_bullet1:'<strong>Acoustic Capture:</strong> Recording low-frequency gut movements with high-fidelity sound capture.',
+    sensor_bullet2:'<strong>Motility Analysis:</strong> Graphing smooth muscle contraction patterns.',
+    sensor_bullet3:'<strong>Rate Tracking:</strong> Instant detection of extreme hypomotility (constipation risk) or hypermotility (diarrhea spasm risk).',
+    sensor_bullet4:'<strong>Anomaly Matching:</strong> Comparing active acoustic patterns with baseline models using ML to predict flares.',
+    display_header:'App Interface & Machine Learning',
+    display_bullet1:'<strong>Daily Intestinal Score:</strong> A clean, intuitive dashboard reflecting overall gut stability and motility indexes.',
+    display_bullet2:'<strong>Behavioral Correlation:</strong> Identifying food, stress, or sleep triggers causing bowel changes.',
+    display_bullet3:'<strong>Early Warning System:</strong> Push notifications with actionable recommendations.',
+    display_bullet4:'<strong>Doctor Portal:</strong> Automatically compiling reports to help clinicians adjust therapeutic strategies efficiently.',
+    phn_progress_lbl:'Gut Stability', phn_stat_lbl1:'Heart Rate', phn_stat_val2:'Low', phn_stat_lbl2:'Stress',
+    sim_header:'AI Decision Engine (Live Interactive Prototype)',
+    sim_metric1_title:'Heart Rate (Wristband)', sim_metric2_title:'Gut Motility Status', sim_metric3_title:'Spasm Prediction Index',
+    sim_panel_title:'<i class="fa-solid fa-tower-broadcast"></i> Acoustic Waveform & Motility Signals (Live Simulation):',
+    sim_btn_normal:'Normal Motility', sim_btn_warning:'Hypomotility Mode', sim_btn_critical:'Acute Intestinal Spasm',
+    sim_aside_title:'AI Inference',
+    sim_aside_desc:'This live simulator demonstrates how our localized machine learning model dynamically infers risk and issues automated patient recommendations.',
+    benefits_header:'Clinical and Operational Benefits',
+    benefits_tile1_title:'Continuous Monitoring', benefits_tile1_desc:'Aggregating daily real-world patient data continuously without physical burden, optimizing outpatient tracking.',
+    benefits_tile2_title:'Proactive Prediction', benefits_tile2_desc:'Predicting motility changes hours before sudden spasms, giving patients time to adjust behaviors.',
+    benefits_tile3_title:'Preventing Complications', benefits_tile3_desc:'Protecting post-op colorectal cancer and high-risk IBS patients from escalating to severe distress phases.',
+    benefits_tile4_title:'Enhanced Quality of Life', benefits_tile4_desc:'Giving patients agency and high psychological confidence as they navigate their daily routines safely.',
+    benefits_tile5_title:'At-Home Remote Care', benefits_tile5_desc:'Lowering emergency room admissions and medical clinic congestion via highly accurate remote monitoring.',
+    benefits_tile6_title:'Informed Daily Decisions', benefits_tile6_desc:'Supplying patients with automated, data-backed nutrition and activity advice specific to their anatomy.',
+    alert_header:'Clinical Limit & Scientific Disclaimer',
+    alert_text:'"The innovative Pregut system is not designed to replace clinical diagnoses, medical interventions, or direct consulting with licensed gastroenterologists. Instead, it serves as an advanced supportive monitoring tool to aid patient self-care, provide early warning signals, and mitigate sudden intestinal distress."',
+    ref_header:'Contact Us & References',
+    ref_section_title:'Scientific References',
+    ref_title1:'Study on IBS Prevalence in Saudi Arabia', ref_title2:'Scientific Review of IBS Prevalence in Arab World', ref_title3:'Global IBS Prevalence Study', ref_title4:'Saudi MOH Colorectal Cancer Awareness',
+    ref_go:'Access Source', form_title:'Partnership & Clinical Research Inquiry',
+    form_subtitle:'Contact us to discuss deployment opportunities within your medical center.',
+    lblCenter:'Medical Center / Hospital Name', center_ph:'e.g., King Abdullah Medical City',
+    lblEmail:'Official Email Address',
+    lblPhone:'Contact Phone / Extension',
+    lblMsg:'Inquiry or Partnership Details', msg_ph:'How can we implement Pregut at your facility?',
+    btnSubmit:'Submit Inquiry',
+    footer_brand:'Pregut Medical Innovation', footer_slide:'Slide', footer_of:'of',
+    bowel_normal:'Stable & Normal', bowel_warning:'Hypomotility / Sluggish', bowel_critical:'Intense Intestinal Spasms',
+    risk_normal:'Safe (Low Risk)', risk_warning:'Moderate (Warning Issued)', risk_critical:'High Spasm Risk',
+    notif_normal:'<strong>Live Inference Output:</strong> Intestinal waveforms, vital markers, and sleep ratios are fully stable and optimal. No interventions required.',
+    notif_warning:'<strong>Automated Patient Action:</strong> Low-motility signal inferred. Recommended: Increase water intake immediately and avoid solid fats over the next 3 hours.',
+    notif_critical:'<strong>Critical Alert Triggered:</strong> Sudden hypermotility and abdominal muscle spasms detected. Automated message dispatched to patient\'s dashboard to implement their prescribed rescue protocol. Medical record logged.',
+    success_msg: (c) => `Thank you for your interest! We have successfully registered inquiry from (${c}). Our team will reach out via the official email provided shortly.`
+  }
+};
+
+function applyTranslation() {
+  const t = T[currentLang];
+  const isAr = currentLang === 'ar';
+  document.body.setAttribute('dir', isAr ? 'rtl' : 'ltr');
+  document.body.setAttribute('lang', currentLang);
+
+  const setId = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+  const setPlaceholder = (id, val) => { const el = document.getElementById(id); if(el) el.placeholder = val; };
+
+  setId('brandName', t.brand);
+  setId('langBtnText', t.lang_btn);
+  setId('nh1', t.nh1); setId('nh2', t.nh2); setId('nh3', t.nh3);
+  ['intro','desc','problem','stats','components','band','sensor','display','workflow','benefits','alert','references'].forEach(k => {
+    setId('n_' + k, t['n_' + k]);
+  });
+
+  // Slide content
+  ['intro_title','intro_desc','tag1','tag2','tag3',
+   'desc_header','desc_text','desc_tile1_title','desc_tile1_desc','desc_tile2_title','desc_tile2_desc','desc_aside_title','desc_aside_desc',
+   'prob_header','prob_text','prob_bullet1','prob_bullet2','prob_bullet3','prob_bullet4','prob_limit_title','prob_limit1','prob_limit2','prob_limit3',
+   'stats_header','stats_card1_title','stats_card1_desc','stats_card2_title','stats_card2_desc','stats_card3_title','stats_card3_desc',
+   'comp_header','hdw_card1_title','hdw_card1_desc','hdw_card2_title','hdw_card2_desc','hdw_card3_title','hdw_card3_desc','hdw_card4_title','hdw_card4_desc',
+   'comp_bullet1','comp_bullet2','comp_bullet3','comp_bullet4',
+   'band_header','band_text','band_tile1','band_tile2','band_tile3','band_tile4','band_aside_title','band_aside_desc',
+   'sensor_header','sensor_aside_title','sensor_aside_desc','sensor_bullet1','sensor_bullet2','sensor_bullet3','sensor_bullet4',
+   'display_header','display_bullet1','display_bullet2','display_bullet3','display_bullet4',
+   'phn_progress_lbl','phn_stat_lbl1','phn_stat_val2','phn_stat_lbl2',
+   'sim_header','sim_metric1_title','sim_metric2_title','sim_metric3_title','sim_panel_title','sim_aside_title','sim_aside_desc',
+   'benefits_header','benefits_tile1_title','benefits_tile1_desc','benefits_tile2_title','benefits_tile2_desc','benefits_tile3_title','benefits_tile3_desc',
+   'benefits_tile4_title','benefits_tile4_desc','benefits_tile5_title','benefits_tile5_desc','benefits_tile6_title','benefits_tile6_desc',
+   'alert_header','alert_text',
+   'ref_header','ref_section_title','ref_title1','ref_title2','ref_title3','ref_title4',
+   'form_title','form_subtitle'
+  ].forEach(k => setId(k, t[k]));
+
+  setId('sim_btn_normal', t.sim_btn_normal);
+  setId('sim_btn_warning', t.sim_btn_warning);
+  setId('sim_btn_critical', t.sim_btn_critical);
+
+  // Form
+  setId('lblCenter', t.lblCenter); setPlaceholder('center', t.center_ph);
+  setId('lblEmail', t.lblEmail);
+  setId('lblPhone', t.lblPhone);
+  setId('lblMsg', t.lblMsg); setPlaceholder('msg', t.msg_ph);
+  setId('btnSubmitForm', t.btnSubmit);
+
+  // Ref buttons
+  ['ref_go1','ref_go2','ref_go3','ref_go4'].forEach(id => setId(id, t.ref_go));
+
+  // Footers
+  for(let i=1; i<=12; i++) {
+    setId('fb'+i, t.footer_brand);
+    setId('fs'+i, `${t.footer_slide} ${i} ${t.footer_of} 12`);
+  }
+
+  // Icons direction
+  const chevrons = ['chevronIcon1','chevronIcon2','chevronIcon3','chevronIcon4'];
+  const angles = ['angleIcon1','angleIcon2','angleIcon3','angleIcon4'];
+  chevrons.forEach(id => { const el = document.getElementById(id); if(el) el.className = isAr ? 'fa-solid fa-chevron-left' : 'fa-solid fa-chevron-right'; });
+  angles.forEach(id => { const el = document.getElementById(id); if(el) el.className = isAr ? 'fa-solid fa-angle-left' : 'fa-solid fa-angle-right'; });
+
+  // Problem card border direction
+  const pcb = document.getElementById('probCardBox');
+  if(pcb) {
+    if(isAr) { pcb.style.borderRight = '5px solid #ef4444'; pcb.style.borderLeft = '1px solid #fecaca'; }
+    else { pcb.style.borderLeft = '5px solid #ef4444'; pcb.style.borderRight = '1px solid #fecaca'; }
+  }
+
+  updateSimulator('normal');
+}
+
+function toggleLanguage() {
+  currentLang = currentLang === 'ar' ? 'en' : 'ar';
+  applyTranslation();
+}
+
+function switchSlide(slideId) {
+  document.querySelectorAll('.slide-view').forEach(s => s.classList.remove('active'));
+  document.getElementById(slideId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.toggle('active', item.getAttribute('onclick').includes(slideId));
+  });
+}
+
+function updateSimulator(mode) {
+  const t = T[currentLang];
+  const hr = document.getElementById('pulseRate');
+  const bowel = document.getElementById('bowelState');
+  const risk = document.getElementById('riskState');
+  const notif = document.getElementById('notifBar');
+  const notifText = document.getElementById('notifText');
+  const icon = notif.querySelector('i');
+
+  if(mode === 'normal') {
+    hr.textContent = '72 BPM';
+    bowel.textContent = t.bowel_normal; bowel.style.color = '#1e293b';
+    risk.textContent = t.risk_normal; risk.style.color = '#009688';
+    notif.className = 'notification-bar';
+    icon.className = 'fa-solid fa-circle-check'; icon.style.color = '#009688';
+    notifText.innerHTML = t.notif_normal;
+  } else if(mode === 'warning') {
+    hr.textContent = '84 BPM';
+    bowel.textContent = t.bowel_warning; bowel.style.color = '#f59e0b';
+    risk.textContent = t.risk_warning; risk.style.color = '#f59e0b';
+    notif.className = 'notification-bar warning';
+    icon.className = 'fa-solid fa-circle-exclamation'; icon.style.color = '#f59e0b';
+    notifText.innerHTML = t.notif_warning;
+  } else if(mode === 'critical') {
+    hr.textContent = '105 BPM';
+    bowel.textContent = t.bowel_critical; bowel.style.color = '#ef4444';
+    risk.textContent = t.risk_critical; risk.style.color = '#ef4444';
+    notif.className = 'notification-bar critical';
+    icon.className = 'fa-solid fa-circle-xmark'; icon.style.color = '#ef4444';
+    notifText.innerHTML = t.notif_critical;
+  }
+}
+
+function showPopup(msg) {
+  const popup = document.getElementById('customPopup');
+  popup.textContent = msg;
+  popup.style.display = 'block';
+  setTimeout(() => { popup.style.display = 'none'; }, 4500);
+}
+
+function handleFormSubmit() {
+  const center = document.getElementById('center').value.trim();
+  const email = document.getElementById('email').value.trim();
+  if(!center || !email) {
+    showPopup(currentLang === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة.' : 'Please fill in all required fields.');
+    return;
+  }
+  showPopup(T[currentLang].success_msg(center));
+  document.getElementById('center').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('msg').value = '';
+}
+</script>
+</body>
+</html>
